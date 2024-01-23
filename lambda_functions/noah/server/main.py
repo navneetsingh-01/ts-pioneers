@@ -8,4 +8,5 @@ def event_handler(payload):
     user = payload["event"]["user"]
     ts = payload["event"]["ts"]
     channel_id = payload["event"]["channel"]
-    slack_message(user, channel_id, "test message", ts)
+    if 'bot_id' not in payload["event"]:
+        slack_message(user, channel_id, "test message", ts)
