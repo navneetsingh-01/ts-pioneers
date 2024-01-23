@@ -15,11 +15,10 @@ def slack_message(user, channel_id, message, ts):
         f"Sending slack message.. User: {user}, Channel: {channel_id}, Timestamp: {ts}, Message: {message}")
     url = f"{base_url}/chat.postMessage"
     token = get_slack_token()
-    message = f"<@{user}>\n{message}"
+    message = f"{message}"
     data = {
         'channel': channel_id,
         'text': message,
-        "thread_ts": ts,
         "mrkdwn": True
     }
     data = urllib.parse.urlencode(data).encode('utf-8')
