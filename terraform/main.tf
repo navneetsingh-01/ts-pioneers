@@ -119,15 +119,18 @@ resource "aws_lambda_function" "noah_lambda" {
   handler = "function.lambda_handler"
   environment {
     variables = {
-      SIGNING_SECRET  = data.vault_generic_secret.secrets.data["SIGNING_SECRET"],
-      SLACK_BOT_TOKEN = data.vault_generic_secret.secrets.data["SLACK_BOT_TOKEN"]
+      SIGNING_SECRET    = data.vault_generic_secret.secrets.data["SIGNING_SECRET"],
+      SLACK_BOT_TOKEN   = data.vault_generic_secret.secrets.data["SLACK_BOT_TOKEN"],
+      SF_ACCESS_TOKEN   = data.vault_generic_secret.secrets.data["SF_ACCESS_TOKEN"],
+      SF_INSTANCE_URL   = data.vault_generic_secret.secrets.data["SF_INSTANCE_URL"],
+      INCIDENTS_CHANNEL = data.vault_generic_secret.secrets.data["INCIDENTS_CHANNEL"]
     }
   }
   role             = aws_iam_role.noah_lambda_role.arn
   source_code_hash = data.archive_file.noah_zip.output_base64sha256
   depends_on       = [aws_s3_bucket.noah_lambda_bucket]
 
-  #   layers = [aws_lambda_layer_version.noah_dependencies_layer.arn]
+  layers = [aws_lambda_layer_version.noah_dependencies_layer.arn]
 
   tracing_config {
     mode = "Active"
@@ -166,6 +169,17 @@ resource "aws_lambda_permission" "noah_api_gateway_invoke_lambda" {
   function_name = aws_lambda_function.noah_lambda.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_api_gateway_rest_api.noah_webhook_api.execution_arn}/*/POST/noah-webhook"
+}
+
+###########################################################
+# LAMBDA LAYERS
+###########################################################
+
+resource "aws_lambda_layer_version" "noah_dependencies_layer" {
+  filename            = local.requirements_path
+  layer_name          = local.layer_name
+  source_code_hash    = filebase64sha256(local.requirements_path)
+  compatible_runtimes = ["python3.10", "python3.9"]
 }
 
 ###########################################################

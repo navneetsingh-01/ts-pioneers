@@ -87,6 +87,11 @@ def lambda_handler(event: Dict[str, Any], context):
         # return "challenge" value from body if it's a "url_verification" request
         return {"statusCode": 200, "body": slack_verification}
 
+    response = {
+        "statusCode": 200,
+        "body": "Webhook received successfully"
+    }
+
     if event["headers"].get("X-Slack-Retry-Num"):
         return response
 
@@ -96,8 +101,4 @@ def lambda_handler(event: Dict[str, Any], context):
     except Exception as e:
         logger.info("Lambda handler error: " + str(e))
 
-    response = {
-        "statusCode": 200,
-        "body": "Webhook received successfully"
-    }
     return response
