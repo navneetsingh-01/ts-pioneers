@@ -135,13 +135,14 @@ resource "aws_lambda_function" "noah_lambda" {
   tracing_config {
     mode = "Active"
   }
+  memory_size = 512
 
-  reserved_concurrent_executions = 20
+  # reserved_concurrent_executions = 20
 
-  #   vpc_config {
-  #     subnet_ids         = data.aws_subnets.noah_subnets.ids
-  #     security_group_ids = data.aws_security_groups.noah_sg.ids
-  #   }
+    # vpc_config {
+    #   subnet_ids         = data.aws_subnets.noah_subnets.ids
+    #   security_group_ids = data.aws_security_groups.noah_sg.ids
+    # }
 }
 
 # Create the IAM role for the Lambda function
@@ -154,6 +155,12 @@ resource "aws_iam_role" "noah_lambda_role" {
 resource "aws_iam_role_policy_attachment" "noah_lambda_policy_attachment" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
   role       = aws_iam_role.noah_lambda_role.name
+}
+
+# Attach the AWS managed policy for Lambda VPC access
+resource "aws_iam_role_policy_attachment" "vacos_slack_webhook_vpc_lambda_policy_attachment" {
+  role       = aws_iam_role.noah_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 # Attach the necessary policy to the IAM role for S3
@@ -220,4 +227,32 @@ resource "aws_apigatewayv2_api_mapping" "noah_webhook_receiver" {
   api_id      = aws_api_gateway_rest_api.noah_webhook_api.id
   domain_name = local.api_gateway_custom_domain
   stage       = aws_api_gateway_deployment.noah_webhook_deployment.stage_name
+}
+
+###########################################################
+# VPC 
+###########################################################
+
+# Get the VPC
+data "aws_vpc" "noah_vpc" {
+  filter {
+    name   = "tag:deployPlatform"
+    values = ["true"]
+  }
+}
+
+# Get the subnet IDs
+data "aws_subnets" "noah_subnets" {
+  filter {
+    name   = "tag:default_natgw"
+    values = ["true"]
+  }
+}
+
+# Get the security group ID for the Lambda function
+data "aws_security_groups" "noah_sg" {
+  filter {
+    name   = "tag:lambda_default_sg"
+    values = ["true"]
+  }
 }

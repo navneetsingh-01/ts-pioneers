@@ -1,6 +1,6 @@
 import os
 import requests
-from .actions import create, describe
+from .actions import create, describe, retrieve
 from ..logger import logger
 
 SF_ACCESS_TOKEN = os.getenv("SF_ACCESS_TOKEN")
@@ -10,6 +10,13 @@ headers = {
     "Content-type": "application/json",
     "Authorization": "Bearer " + SF_ACCESS_TOKEN
 }
+
+
+def get_case_number(id):
+    response = requests.get(
+        os.getenv("SF_INSTANCE_URL") + retrieve("Case", id), headers=headers)
+    case_number = response.json()["CaseNumber"]
+    return case_number
 
 
 def get_record_type_id(record_type):
@@ -41,8 +48,12 @@ def log_case():
     }
 
     try:
+        logger.info("Logging supportforce case")
         response = requests.post(
             SF_INSTANCE_URL + create("Case"),  headers=headers, json=case_details)
         logger.info(str(response.json()))
+        caseID = response.json()["id"]
+        caseNumber = get_case_number(caseID)
+        return caseNumber
     except Exception as e:
         logger.info("Something went wrong: " + str(e))

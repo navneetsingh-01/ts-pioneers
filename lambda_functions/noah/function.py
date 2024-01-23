@@ -6,7 +6,7 @@ import hashlib
 import time
 import hmac
 from typing import Dict, Any
-from server.main import event_handler
+from server.main import event_handler, handle_interactive_response
 
 logger = logging.getLogger('')
 logger.setLevel(logging.INFO)
@@ -73,6 +73,14 @@ def validate_slack_request(headers: Dict[str, Any], request_body: str):
     return False
 
 
+def is_json(myjson):
+    try:
+        json.loads(myjson)
+    except ValueError as e:
+        return False
+    return True
+
+
 def lambda_handler(event: Dict[str, Any], context):
     logger.info(str(event))
 
@@ -80,25 +88,30 @@ def lambda_handler(event: Dict[str, Any], context):
     if not validate_slack_request(event["headers"], event["body"]):
         raise Exception("Unable to verify that the message is from slack.")
 
-    payload = json.loads(event["body"])
-    slack_verification = url_verification(payload)
-    if slack_verification:
-        logger.info(slack_verification)
-        # return "challenge" value from body if it's a "url_verification" request
-        return {"statusCode": 200, "body": slack_verification}
+    if is_json(event["body"]):
+        payload = json.loads(event["body"])
+        slack_verification = url_verification(payload)
+        if slack_verification:
+            logger.info(slack_verification)
+            # return "challenge" value from body if it's a "url_verification" request
+            return {"statusCode": 200, "body": slack_verification}
 
-    response = {
-        "statusCode": 200,
-        "body": "Webhook received successfully"
-    }
+        response = {
+            "statusCode": 200,
+            "body": "Webhook received successfully"
+        }
 
-    if event["headers"].get("X-Slack-Retry-Num"):
+        if event["headers"].get("X-Slack-Retry-Num"):
+            return response
+
+        try:
+            logger.info("Payload: " + str(payload))
+            event_handler(payload)
+        except Exception as e:
+            logger.info("Lambda handler error: " + str(e))
+
         return response
-
-    try:
-        logger.info("Payload: " + str(payload))
-        event_handler(payload)
-    except Exception as e:
-        logger.info("Lambda handler error: " + str(e))
-
-    return response
+    else:
+        logger.info("Interactive component invoked")
+        handle_interactive_response(event["body"])
+        return {"isBase64Encoded": True, "statusCode": 200, "headers": {}, "body": ""}
