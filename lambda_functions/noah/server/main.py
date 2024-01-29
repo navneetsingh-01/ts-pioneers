@@ -76,6 +76,8 @@ def handle_interactive_response(payload):
         slack_message("U05FJ0V6QBZ", "D06EX6DM2SJ",
                       "Looking for any active incidents relating to this issue")
 
+        # incidents = conversation_history_ai("D06EX6DM2SJ", application)
+
         time.sleep(3)
         slack_message("U05FJ0V6QBZ", "D06EX6DM2SJ",
                       "Ah, I found one! Here’s the most recent update on it (I found this in the #broadcast-bt-incidents Slack channel :slightly_smiling_face:)\n\n")
@@ -93,9 +95,7 @@ def handle_interactive_response(payload):
         elif payload.count("ADPASSWORD"):
             slack_message("U05FJ0V6QBZ", "D06EX6DM2SJ",
                           "Great!!")
-        # case_number = log_case()
-        # slack_message("U05FJ0V6QBZ", "D06EX6DM2SJ",
-        #               "Your case is created successfully - " + str(case_number))
+
     elif payload.lower().count("no") == 2:
         if payload.count("FORGETPASSWORD"):
             slack_message("U05FJ0V6QBZ", "D06EX6DM2SJ",
@@ -107,6 +107,7 @@ def handle_interactive_response(payload):
             slack_message("U05FJ0V6QBZ", "D06EX6DM2SJ",
                           "No worries!! I'll create a case for you.")
             time.sleep(10)
+            # case = log_case()
             case_number = "15758126"
             slack_message("U05FJ0V6QBZ", "D06EX6DM2SJ",
                           "All set! I got a case created for you. Here’s the Case #:" + str(case_number) + "\nYou can check progress using the Ask Concierge app.")
