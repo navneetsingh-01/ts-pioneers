@@ -24,7 +24,19 @@ def getApplicationError(inputText):
 
 def check_internet_speed():
     st = speedtest.Speedtest()
-    download = st.download()
-    upload = st.upload()
-    slack_message(None, "D06EX6DM2SJ", "Download: " +
-                  str(download) + " | Upload: " + str(upload))
+    download = str(st.download())
+    upload = str(st.upload())
+    download = download[0:2] + "." + download[2:5]
+    upload = upload[0:2] + "." + upload[2:5]
+    slack_message(None, "D06EX6DM2SJ", "Here is what I found: \n :dart: Download Speed: " +
+                  str(download) + " Mbps\n :dart: Upload Speed: " + str(upload) + "Mbps")
+    msg = "great performance"
+    download = float(download)
+    if download >= 20 and download < 50:
+        msg = "good performance"
+    elif download >= 5 and download < 20:
+        msg = "low performance"
+    elif download >= 0 and download < 5:
+        msg = "poor performace"
+    slack_message(None, "D06EX6DM2SJ",
+                  "This means your internet performance is currently considered having a " + msg)
